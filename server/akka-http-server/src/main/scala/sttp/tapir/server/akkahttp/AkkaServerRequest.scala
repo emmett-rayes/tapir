@@ -1,7 +1,8 @@
 package sttp.tapir.server.akkahttp
 
 import akka.http.scaladsl.server.RequestContext
-import akka.http.scaladsl.model.headers.{`Content-Length`, `Content-Type`}
+import akka.http.javadsl.model.headers.ContentType
+import akka.http.scaladsl.model.headers.`Content-Length`
 import akka.http.scaladsl.model.{Uri => AkkaUri}
 import sttp.model.Uri.{Authority, FragmentSegment, HostSegment, PathSegments, QuerySegment}
 import sttp.model.{Header, Method, QueryParams, Uri}
@@ -64,10 +65,11 @@ private[akkahttp] case class AkkaServerRequest(ctx: RequestContext, attributes: 
   // https://doc.akka.io/docs/akka-http/current/common/http-model.html?language=scala#http-headers
   // https://github.com/softwaremill/tapir/issues/331
   override lazy val headers: Seq[Header] = {
-    val contentLength = ctx.request.entity.contentLengthOption.map(`Content-Length`(_))
-    val contentType = `Content-Type`(ctx.request.entity.contentType)
-    val akkaHeaders = contentType :: contentLength.toList ++ ctx.request.headers
-    akkaHeaders.filterNot(_.value == EmptyContentType).map(h => Header(h.name(), h.value()))
+    val contentLength = ctx.request.entity.contentLengthOption.map(l => Header("Content-Length", l.toString))
+    val contentType = ContentType.create(ctx.request.entity.contentType)
+    val akkaHeaders = ctx.request.headers
+    contentLength.toList ++
+      (contentType +: akkaHeaders).filterNot(_.value == EmptyContentType).map(h => Header(h.name(), h.value()))
   }
 
   override def attribute[T](k: AttributeKey[T]): Option[T] = attributes.get(k)

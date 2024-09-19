@@ -1201,16 +1201,21 @@ lazy val serverTests: ProjectMatrix = (projectMatrix in file("server/tests"))
 lazy val akkaHttpServer: ProjectMatrix = (projectMatrix in file("server/akka-http-server"))
   .settings(commonSettings)
   .settings(
+    resolvers ++= Seq(
+      "Akka".at("https://repo.akka.io/maven"),
+      Resolver.file("Local", file(Path.userHome.absolutePath + "/.ivy2/local"))(Resolver.ivyStylePatterns),
+    ),
     name := "tapir-akka-http-server",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-http" % Versions.akkaHttp,
-      "com.typesafe.akka" %% "akka-stream" % Versions.akkaStreams,
-      "com.typesafe.akka" %% "akka-slf4j" % Versions.akkaStreams,
+      "com.typesafe.akka" %% "akka-http" % (if (scala3 == scalaVersion.value) "10.6.0-M1" else Versions.akkaHttp),
+      "com.typesafe.akka" %% "akka-stream" % (if (scala3 == scalaVersion.value) "2.9.5" else Versions.akkaStreams),
+      "com.typesafe.akka" %% "akka-slf4j" % (if (scala3 == scalaVersion.value) "2.9.5" else Versions.akkaStreams),
       "com.softwaremill.sttp.shared" %% "akka" % Versions.sttpShared,
-      "com.softwaremill.sttp.client3" %% "akka-http-backend" % Versions.sttp % Test
-    )
-  )
-  .jvmPlatform(scalaVersions = scala2Versions, settings = commonJvmSettings)
+    ) ++
+if (scala3 == scalaVersion.value) Seq("com.softwaremill.sttp.client3" %% "akka-http-backend" % Versions.sttp % Test)
+else Seq()
+)
+  .jvmPlatform(scalaVersions = scala2And3Versions, settings = commonJvmSettings)
   .dependsOn(serverCore, serverTests % Test)
 
 lazy val pekkoHttpServer: ProjectMatrix = (projectMatrix in file("server/pekko-http-server"))

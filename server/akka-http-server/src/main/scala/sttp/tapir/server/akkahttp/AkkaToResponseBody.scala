@@ -69,7 +69,7 @@ private[akkahttp] class AkkaToResponseBody(implicit m: Materializer, ec: Executi
       case m: RawBodyType.MultipartBody =>
         val parts = (r: Seq[RawPart]).flatMap(rawPartToBodyPart(m, _))
         val body = Multipart.FormData(parts: _*)
-        body.toEntity()
+        body.toEntity
     }
   }
 
